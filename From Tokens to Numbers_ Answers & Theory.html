@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>From Tokens to Numbers Tutorial</title>
+<style>
+:root{--bg:#fff;--fg:#000;--muted:#555;--side:#f1f1f1;--code:#f1f1f1;--codefg:#000;--green:#04AA6D;--dgreen:#282A35;--note:#ddffdd;--warn:#ffffcc;--warnb:#ffeb3b;--out:#fff;--line:#ccc;--kw:#0000cd;--str:#a52a2a;--cm:#008000;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1e26;--fg:#e8e8e8;--muted:#aaa;--side:#282a35;--code:#2d2f3b;--codefg:#e8e8e8;--note:#1f3a2c;--warn:#3a3820;--out:#16181f;--line:#444;--kw:#8ab4ff;--str:#f2a086;--cm:#7fd48a}}
+:root[data-theme="dark"]{--bg:#1c1e26;--fg:#e8e8e8;--muted:#aaa;--side:#282a35;--code:#2d2f3b;--codefg:#e8e8e8;--note:#1f3a2c;--warn:#3a3820;--out:#16181f;--line:#444;--kw:#8ab4ff;--str:#f2a086;--cm:#7fd48a}
+html{scroll-padding-top:calc(60px + env(safe-area-inset-top,0px));scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:Verdana,"Segoe UI",sans-serif;font-size:15px;line-height:1.6}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--dgreen);color:#fff;padding:10px 20px;display:flex;align-items:center;gap:14px}
+header b{color:var(--green);font-size:22px}header span{font-size:15px}
+.wrap{display:flex;max-width:1200px;margin:0 auto}
+nav{width:230px;flex:none;background:var(--side);padding:14px 0;position:sticky;top:50px;align-self:flex-start;height:calc(100vh - 50px);overflow:auto}
+nav h4{margin:10px 16px 4px;font-size:13px;color:var(--muted);text-transform:uppercase}
+nav a{display:block;padding:5px 16px;color:var(--fg);text-decoration:none;font-size:14px}
+nav a:hover{background:var(--green);color:#fff}
+main{flex:1;min-width:0;padding:10px 28px 60px}
+h1{font-size:32px;margin:.5em 0 .2em}h2{font-size:26px;border-bottom:3px solid var(--green);padding-bottom:4px;margin-top:2em}h3{font-size:19px;margin-top:1.6em}
+.ex{border:1px solid var(--line);margin:16px 0;background:var(--out)}
+.ex>h5{margin:0;padding:8px 14px;background:var(--side);font-size:15px;border-bottom:1px solid var(--line)}
+pre{margin:0;padding:12px 14px;background:var(--code);color:var(--codefg);overflow-x:auto;font:13.5px/1.5 Consolas,"Courier New",monospace}
+.out{padding:10px 14px;background:var(--out);border-top:1px dashed var(--line);font:13px/1.45 Consolas,monospace;white-space:pre-wrap;overflow-x:auto}
+.out:before{content:"Result: ";font-weight:bold;color:var(--green)}
+code{background:var(--code);padding:1px 5px;font:13.5px Consolas,monospace}
+.k{color:var(--kw)}.s{color:var(--str)}.c{color:var(--cm)}
+.note,.warn{padding:10px 16px;margin:16px 0;border-left:6px solid var(--green);background:var(--note)}
+.warn{border-color:var(--warnb);background:var(--warn)}
+.formula{text-align:center;font:italic 18px Georgia,serif;background:var(--side);padding:12px;margin:14px 0;overflow-x:auto}
+table{border-collapse:collapse;margin:12px 0;font-size:14px;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:6px 12px;text-align:left}th{background:var(--green);color:#fff}
+.btn{display:inline-block;background:var(--green);color:#fff;padding:8px 18px;text-decoration:none;margin-top:12px}
+.btn:hover{background:var(--dgreen)}
+@media (max-width:760px){.wrap{display:block}nav{position:static;width:auto;height:auto;display:flex;flex-wrap:wrap;padding:6px}nav h4{display:none}nav a{padding:5px 10px}main{padding:6px 16px 50px}}
+</style>
+</head>
+<body>
+<header><b>Lab<span style="color:#fff">Schools</span></b><span>From Tokens to Numbers · Answers &amp; Theory</span></header>
+<div class="wrap">
+<nav>
+<h4>Tutorial</h4>
+<a href="#intro">Overview</a>
+<a href="#ex1">1. Document–term matrix</a>
+<a href="#ex2">2. Sparsity &amp; hapax</a>
+<a href="#ex3">3. Zipf &amp; Heaps</a>
+<a href="#ex4">4. Weighting &amp; tf-idf</a>
+<a href="#ex5">5. Cosine similarity</a>
+<a href="#sum">Cheat sheet</a>
+</nav>
+<main>
+<h1 id="intro">From Tokens to Numbers</h1>
+<p>This page shows the answer to every exercise in the lab, <b>how to work it out</b>, and <b>why it works</b>. Each section has the same layout: theory first, then the code you write, then what you should see.</p>
+<div class="note"><b>The big idea:</b> a computer cannot measure a list of words. We turn each document into a row of numbers, and then ordinary maths (sums, logs, angles) works on text. But <i>how</i> you fill the row decides what you can find.</div>
+
+<h2 id="ex1">1. The Document–Term Matrix</h2>
+<h3>Theory</h3>
+<p>A <b>document–term matrix (DTM)</b> has one <b>row per document</b>, one <b>column per word</b> in the vocabulary, and a <b>count</b> in each cell. Word order is thrown away (the “bag of words” assumption). The vocabulary is every distinct word in the whole corpus, which is why it is built from <i>all</i> documents together.</p>
+<p><code>CountVectorizer</code> does three jobs: split the text, build the vocabulary, count. By default it uses a crude splitter. The <code>analyzer</code> argument lets you replace the whole text-to-tokens step with your own function.</p>
+<h3>Exercise 1.1 answer</h3>
+<div class="ex"><h5>Example</h5>
+<pre>cv = CountVectorizer(<span class="k">analyzer</span>=spacy_tokens)   <span class="c"># no brackets!</span>
+X = cv.fit_transform(meta[<span class="s">"text"</span>])</pre>
+<div class="out">shape: (9, 418)  -> 9 documents, 418 words</div></div>
+<div class="warn"><b>Common mistake:</b> <code>analyzer=spacy_tokens()</code> <i>calls</i> the function immediately and fails. You pass the function itself so the vectoriser can call it on each document.</div>
+<p><b>Why the vocabulary shrinks:</b> <code>spacy_tokens</code> drops stop words and punctuation and lemmatises, so <i>programmes</i> and <i>programme</i> become one column.</p>
+<div class="note"><b>Take-away:</b> the matrix is not the text, it is <b>one representation</b> of it. Change the tokeniser and every later number changes. Always report your tokeniser, model version and stop-word list.</div>
+
+<h2 id="ex2">2. Sparsity and Hapax Legomena</h2>
+<h3>Theory</h3>
+<div class="formula">sparsity = 1 − (non-zero cells ÷ total cells)</div>
+<p>Most words appear in few documents, so most cells are 0. A <b>sparse matrix</b> stores only the non-zero cells (their values and positions), so memory grows with the number of non-zeros, not with rows × columns. A dense 100,000 × 200,000 matrix at 8 bytes per cell needs 160 GB.</p>
+<p><b>Hapax legomena</b> are words occurring exactly once in the corpus; <b>dis legomena</b> occur exactly twice.</p>
+<h3>Exercise 2.1 answer</h3>
+<div class="ex"><h5>Example</h5>
+<pre>hapax_count = (frequencies == <span class="k">1</span>).sum()
+dis_count   = (frequencies == <span class="k">2</span>).sum()
+hapax_share = round(<span class="k">100</span> * hapax_count / len(frequencies), <span class="k">1</span>)</pre>
+<div class="out">occur exactly once (hapax): 213
+occur exactly twice (dis):  11
+hapax as share of vocabulary: 51.0 %</div></div>
+<p><b>How it works:</b> <code>frequencies == 1</code> makes an array of True/False. Python treats True as 1, so <code>.sum()</code> counts the Trues. Dividing by the vocabulary size gives the proportion.</p>
+<table><tr><th>Measure</th><th>Our corpus</th></tr><tr><td>Matrix size</td><td>9 × 418 = 3,762 cells</td></tr><tr><td>Non-zero cells</td><td>1,103</td></tr><tr><td>Sparsity</td><td>70.7%</td></tr><tr><td>Dense ÷ sparse memory</td><td>2.3×</td></tr></table>
+<div class="note"><b>Take-away:</b> sparsity is a law-like feature of language, not bad data. About half of the vocabulary is hapax, and dropping it (<code>min_df=2</code>) suits topic modelling but can destroy evidence in authorship work.</div>
+
+<h2 id="ex3">3. Zipf and Herdan–Heaps</h2>
+<h3>Theory</h3>
+<div class="formula">Zipf: f × r = k &nbsp;&nbsp;|&nbsp;&nbsp; Heaps: V = K × N<sup>β</sup></div>
+<p><b>Zipf’s law:</b> frequency <i>f</i> falls in proportion to rank <i>r</i>. Taking logs of f = k/r gives log f = log k − log r, a straight line with <b>slope −1</b> on log–log axes.</p>
+<p><b>Herdan–Heaps’ law:</b> vocabulary <i>V</i> grows as a power of the number of tokens <i>N</i>. Taking logs gives log V = log K + β log N, so <b>β is the slope</b> of a straight-line fit. Typical β is 0.4–0.6.</p>
+<h3>Exercise 3.1 answer</h3>
+<div class="ex"><h5>Example</h5>
+<pre><span class="k">for</span> i <span class="k">in</span> range(len(all_tokens)):
+    word = all_tokens[i]
+    seen.add(word)                     <span class="c"># a set keeps each word once</span>
+    <span class="k">if</span> (i + 1) % 200 == 0:           <span class="c"># true at 200, 400, 600 ...</span>
+        n_tokens.append(i + 1)
+        n_types.append(len(seen))      <span class="c"># vocabulary size so far</span></pre>
+<div class="out">recorded 38 points
+final vocabulary: 513 words from 7600 tokens
+estimated beta: 0.48</div></div>
+<p><b>Why a set?</b> Adding a word already in a set does nothing, so <code>len(seen)</code> is always the number of <i>different</i> words read so far. <code>%</code> is the remainder after division, so <code>% 200 == 0</code> fires once every 200 tokens.</p>
+<div class="warn"><b>Be sceptical:</b> our Zipf slope is about −1.41, not −1, and β = 0.48 sits in the expected range partly by luck. The corpus is only ~7,600 tokens. Try changing 200 to 50 and watch β move.</div>
+<p><b>Why this matters:</b> Zipf says a handful of words (<i>the, of, and</i>) dominate every count. Heaps says the words that tell documents apart live in the rare long tail. Raw counts therefore reward exactly the wrong words.</p>
+
+<h2 id="ex4">4. Weighting and tf-idf</h2>
+<h3>Theory</h3>
+<div class="formula">tf-idf(t, d) = tf(t, d) × idf(t) &nbsp;&nbsp; idf(t) = ln((1 + n) ÷ (1 + df(t))) + 1</div>
+<p><b>tf</b> is how often the term is in this document. <b>df</b> is how many documents contain it, and <b>n</b> is the total number of documents. A word in every document gets the smallest idf; a word in one document gets the largest. The product is high only when a word is frequent <i>here</i> and rare <i>elsewhere</i>.</p>
+<p>You can check the table by hand with n = 9:</p>
+<table><tr><th>df</th><th>Calculation</th><th>idf</th></tr><tr><td>9 (every speech)</td><td>ln(10/10) + 1</td><td>1.0</td></tr><tr><td>1 (one speech)</td><td>ln(10/2) + 1</td><td>2.609</td></tr></table>
+<p>Those are exactly the lowest and highest values in the notebook output.</p>
+<h3>Exercises 4.1 – 4.3 answers</h3>
+<div class="ex"><h5>Example</h5>
+<pre>cv_nostop = CountVectorizer(<span class="k">stop_words</span>=<span class="s">"english"</span>)   <span class="c"># 4.1</span>
+tv = TfidfVectorizer(<span class="k">stop_words</span>=<span class="s">"english"</span>)           <span class="c"># 4.2</span>
+idf_table = idf_table.sort_values(<span class="s">"idf"</span>)             <span class="c"># 4.3</span></pre></div>
+<table><tr><th>Scheme</th><th>Kennedy</th><th>Nixon</th><th>Reagan</th></tr>
+<tr><td>Raw counts</td><td>the, and, of</td><td>the, and, of</td><td>the, of, to</td></tr>
+<tr><td>Stop words removed</td><td>people, congress, space</td><td>people, year, congress</td><td>people, defence, come</td></tr>
+<tr><td>tf-idf</td><td>space, new, moon</td><td>revenue, sharing, people</td><td>defence, people, tax</td></tr></table>
+<p><b>Reading the table:</b> removing stop words helps, but <i>people</i>, <i>year</i> and <i>congress</i> are still shared by every speaker. Only tf-idf surfaces what is <i>distinctive</i>. Swapping weighting schemes means changing one class name; the interface is identical.</p>
+<div class="warn"><b>Caveat:</b> idf belongs to your <i>corpus</i>, not the language. In a corpus of papers all about photosynthesis, that word gets a low idf. tf-idf measures distinctiveness within a collection, which is not the same as importance.</div>
+
+<h2 id="ex5">5. Cosine Similarity</h2>
+<h3>Theory</h3>
+<div class="formula">cos(θ) = (a · b) ÷ (‖a‖ ‖b‖)</div>
+<p>Each document is a vector. Cosine similarity is the <b>angle</b> between two vectors, so it ignores length: a short and a long speech on the same topic still score as close. It is 1 for identical direction and 0 when the documents share no words (word counts are never negative).</p>
+<h3>Exercises 5.1 and 5.2 answers</h3>
+<div class="ex"><h5>Example</h5>
+<pre><span class="k">if</span> meta.loc[i, <span class="s">"president"</span>] == meta.loc[j, <span class="s">"president"</span>]:
+    same.append(score)
+<span class="k">else</span>:
+    different.append(score)
+
+within_raw, between_raw = compare_within_and_between(X_raw)</pre>
+<div class="out">tf-idf       same 0.925   different 0.259   gap 0.666
+raw counts   same 0.995   different 0.920   gap 0.075</div></div>
+<p><b>How it works:</b> the loop starts <code>j</code> at <code>i + 1</code>, so each pair is counted once and the diagonal (a document against itself) is skipped. The <code>if</code> sorts each score by whether the two speeches share a speaker, then <code>np.mean</code> averages each list.</p>
+<p><b>Why the raw counts fail:</b> every speech is mostly function words, so every vector points the same way and even <i>unrelated</i> speeches score about 0.92. tf-idf removes that shared background, so the speaker blocks stand out (0.93 inside a block, about 0.26 outside).</p>
+<div class="note"><b>Take-away:</b> a cosine score alone means nothing. Compare it with a baseline from the same matrix, here the gap between same-speaker and different-speaker pairs, and never compare scores across different pipelines.</div>
+
+<h2 id="sum">Cheat Sheet</h2>
+<table><tr><th>Task</th><th>Code</th><th>Idea</th></tr>
+<tr><td>Custom tokeniser</td><td><code>analyzer=fn</code></td><td>Pass function, not result</td></tr>
+<tr><td>Count a condition</td><td><code>(arr == 1).sum()</code></td><td>True counts as 1</td></tr>
+<tr><td>Vocabulary growth</td><td><code>set.add</code>, <code>len(set)</code></td><td>Sets keep unique items</td></tr>
+<tr><td>Every N steps</td><td><code>(i + 1) % N == 0</code></td><td>Remainder is 0</td></tr>
+<tr><td>Drop stop words</td><td><code>stop_words="english"</code></td><td>Built-in list</td></tr>
+<tr><td>Weight by rarity</td><td><code>TfidfVectorizer</code></td><td>tf × idf</td></tr>
+<tr><td>Sort a table</td><td><code>.sort_values("col")</code></td><td>Lowest first</td></tr>
+<tr><td>Compare documents</td><td><code>cosine_similarity(X)</code></td><td>Angle, not length</td></tr></table>
+<a class="btn" href="#intro">Back to top ❯</a>
+</main>
+</div>
+</body>
+</html>
